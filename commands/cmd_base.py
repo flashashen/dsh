@@ -13,8 +13,14 @@ class CmdBase(cmd.Cmd, object):
     def do_q(self, line):
         return True
 
-    def help_q(self):
-        print 'quit the current context'
+    def do_EOF(self, line):
+        print '\n'
+        return True
+
+    # Keep EOF and q from cluttering help
+    def completenames(self, text, *ignored):
+        dotext = 'do_'+text
+        return [a[3:] for a in self.get_names() if a.startswith(dotext) and not a in ['do_EOF','do_q'] ]
 
 
     def cmdloop_ignore_interrupt(self):
@@ -27,12 +33,33 @@ class CmdBase(cmd.Cmd, object):
                 quit = True
 
             except KeyboardInterrupt as ke:
-                pass #print '\n'
+                print '\n'
 
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 print repr(traceback.format_exception(exc_type, exc_value,
                                                       exc_traceback))
+
+
+    def valueFromNestedDict(self, line, cmd_dict = None):
+
+        # By default, use the lastcmd (first segment) to get the command tree
+        # for this command
+        if not cmd_dict:
+            cmd_dict = self.cmd_tree[self.lastcmd.split()[0]]
+
+        lineSegments = line.split()
+        val = cmd_dict
+        for item in lineSegments:
+            if item in val:
+                val = val[item]
+            else:
+                break
+
+        if not isinstance(val, dict):
+            return val
+        else:
+            return None
 
 
     def completeFromNestedDict(self, line, cmd_dict):
@@ -47,8 +74,9 @@ class CmdBase(cmd.Cmd, object):
             cur_dict = cmd_dict
             matched = False
             for item in lineSegments:
-                # skip first segement if it's just the name of the command
-                if item == self.name:
+                # skip first segement if it's just the name of the command. 'name' is a new
+                # sublcass attribute that subclasses may not provide
+                if hasattr(self, 'name') and item == self.name:
                     pass
                 elif item in cur_dict:
                     matched = True
@@ -82,3 +110,34 @@ class CmdBase(cmd.Cmd, object):
 
         except Exception as e:
             print e
+
+
+
+    #
+    # def completeFromArrays(self, line, argLists):
+    #
+    #     lineSegments = line.split()
+    #     numArgsInput = len(lineSegments)-1;
+    #     endsWithWhitespace = line[-1].isspace()
+    #
+    #
+    #     # If the input ends in whitespace, the the next completion wil be
+    #     # the whole of the next list in the sequence
+    #     if endsWithWhitespace:
+    #         if numArgsInput >= len(argLists):
+    #             return []
+    #         return argLists[numArgsInput][:]
+    #
+    #
+    #     # The input cursor is still at the end of the command. Wait for an
+    #     # initial whitespace before returning any completions. Also test
+    #     # for extra arguments
+    #     if numArgsInput == 0 or numArgsInput > len(argLists):
+    #         return []
+    #
+    #
+    #     # Return any matching values from the relevant list
+    #     return [ f
+    #              for f in argLists[numArgsInput-1]
+    #              if f.startswith(lineSegments[-1])
+    #              ]

@@ -17,15 +17,19 @@ class CmdProject(CmdBase, object):
 
 
 
-
     def do_test(self, line):
-        print self.complete_prj('prj ',  'prj ',  4, 4)
+        print self.complete_prj('p',  'prj py',  4, 5)
+
 
     def do_prj(self, line):
 
         args = line.split()
         if not args:
             print 'No project specified'
+            return
+
+        if args[0] not in self.prj_objects:
+            print 'Project {} not found'.format(args[0])
             return
 
         cmd_obj = self.prj_objects[args[0]]
@@ -36,13 +40,21 @@ class CmdProject(CmdBase, object):
                 cmd_obj.cmdloop()
 
 
+    # Return project command object names as well as the default commands
+    # def completenames(self, text, *ignored):
+    #     names = super(self.__class__, self).completenames(text, *ignored)
+    #     for name in self.prj_objects:
+    #         names.append(name)
+    #     names.remove(self.name)
+    #     return names;
+
+
     def complete_prj(self, text, line, begidx, endidx):
-        # print 'complete inputs:', text, line, begidx, endidx
         return self.completeFromNestedDict(line, self.prj_objects)
 
 
     def help_prj(self):
-        print "put prj help here"
+        print "\nSelect a command context for code project. Once selected, project specific commands are available\n\nUsage: prj <project name>\n"
 
 
 
@@ -75,58 +87,6 @@ class CmdProject(CmdBase, object):
                 print("Failed to load config for {}. Error: {}".format(prj_name, str(e)))
 
 
-
-    # def completeFromNestedDict(self, line, cmd_dict):
-    #
-    #     try:
-    #         lineSegments = line.split()
-    #         if lineSegments:
-    #             endsWithWhitespace = line[-1].isspace()
-    #         else:
-    #             return cmd_dict.keys()
-    #
-    #         cur_dict = cmd_dict
-    #         matched = False
-    #         for item in lineSegments:
-    #             # skip first segement if it's just the name of the command
-    #             if item == self.name:
-    #                 pass
-    #             elif item in cur_dict:
-    #                 matched = True
-    #                 cur_dict = cur_dict[item]
-    #             else:
-    #                 matched = False
-    #                 break
-    #
-    #         if not cur_dict:
-    #             return []
-    #         elif isinstance(cur_dict,list):
-    #             return cur_dict
-    #         elif not isinstance(cur_dict,dict):
-    #             return []
-    #
-    #
-    #         # If the input ends in whitespace, the the next completion will be
-    #         # the whole of the next list in the sequence
-    #         if endsWithWhitespace:
-    #             return cur_dict.keys()
-    #
-    #         clist =  [x for x in cur_dict.keys() if x.startswith(lineSegments[-1])]
-    #
-    #         # If the last segment matched something but there are no completions
-    #         # found, then the last item may be complete and we want to return the
-    #         # next set of keys
-    #         if matched and not clist:
-    #             return cur_dict.keys()
-    #
-    #         return clist
-    #
-    #     except Exception as e:
-    #         print e
-
-
-
-
     def create_do_shell_command_func(self, cmd):
         def func(self, line):
             print 'executing: {} against line (ignored) {} '.format(cmd, line)
@@ -146,7 +106,7 @@ class CmdProject(CmdBase, object):
 
     def create_prj_subcmd_class(self, prj_name, prj_dict):
 
-        sub_cmd_class = type("Cmd_" + prj_name, (cmd.Cmd, object), {})
+        sub_cmd_class = type("Cmd_" + prj_name, (CmdBase, object), {})
 
         sub_cmd_class.do_q = self.do_q
         sub_cmd_class.prompt = '({}) '.format(prj_name)
@@ -183,17 +143,3 @@ if __name__ == '__main__':
     prj.init()
     prj.cmdloop_ignore_interrupt()
 
-    # quit = False;
-    #
-    # while not quit:
-    #     try:
-    #         prj.cmdloop()
-    #         quit = True
-    #
-    #     except KeyboardInterrupt as ke:
-    #         pass #print '\n'
-    #
-    #     except Exception as e:
-    #         exc_type, exc_value, exc_traceback = sys.exc_info()
-    #         print repr(traceback.format_exception(exc_type, exc_value,
-    #                                               exc_traceback))
