@@ -1,13 +1,15 @@
 
-
-dsh:
-    build: .
-    volumes:
-        - ~:/root
-        - /var/run/docker.sock:/var/run/docker.sock
-        - ~/.ssh/ans/id_rsa:/root/id_rsa
-    restart: always
-    command: "python /app/dsh.py"
-    environment:
-        ANSIBLE_HOST_KEY_CHECKING: false
+version: '2'
+services:
+  dsh:
+      build: .
+      image: docker.an.local/dsh
+      volumes:
+          - ~:/root
+          - /var/run/docker.sock:/var/run/docker.sock
+          - ~/.ssh/ans/id_rsa:/app/id_rsa
+      restart: always
+      command: "python /app/dsh.py"
+      environment:
+          ANSIBLE_HOST_KEY_CHECKING: false
 
