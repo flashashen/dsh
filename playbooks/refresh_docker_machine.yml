@@ -1,6 +1,14 @@
-- name: Pauls Test Machine Setup
-  hosts: fsd-docker01.an.local
+- name: Correct docker vm
+  hosts: all
   sudo: True
 
-- copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
+  tasks:
+      ##########
+      # The simplest task
+      # Each task must have a name & action.
+      - name: Check that the server's alive
+        action: ping
+
+#tasks:
+#  - copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
 

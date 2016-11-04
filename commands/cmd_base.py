@@ -190,12 +190,14 @@ class CmdBase(cmd.Cmd, object):
 
 
     # Cmd class will call this method on the line if it begins with '!'
-    def do_shell(self, line):
+    def do_shell(self, line, print_to_console=True):
         try:
             output = subprocess.check_output(line, stderr=subprocess.STDOUT, shell=True)
         except subprocess.CalledProcessError as e:
             output = e.output
-        print(output)
+        if print_to_console:
+            print(output)
+        return output
 
 
     def create_help_func(self, str):
@@ -243,9 +245,13 @@ def add_default_command_delegation(obj, name):
     # Add default do method
     def d(self, line):
         try:
-            getattr(self, 'do_'+line)(line)
-        except:
-            print "no command '{}'".format(line)
+            func = getattr(self, 'do_'+line)
+            if not func:
+                print "no command '{}'".format(line)
+                return
+            func(line)
+        except Exception as e:
+            print e.message
     setattr(obj.__class__, 'do_' + name, d)
 
     # Add default complete method

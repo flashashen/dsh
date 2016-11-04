@@ -2,6 +2,7 @@ import os, cmd, pprint
 import subprocess
 import yaml
 
+import cmd_base
 from cmd_base import CmdBase
 
 class CmdConfig(CmdBase, object):
@@ -11,32 +12,26 @@ class CmdConfig(CmdBase, object):
 
     def __init__(self, on_load=None):
 
-        self.name = 'cfg'
-
-        self.on_load = on_load
-
-        self.cmd_tree = {'cfg':
-                             {'list':'',
-                              'load':'',
-                              'search: '','
-                              'edit':''}}
-
-        self.cfg = {}
-
         super(self.__class__, self).__init__()
 
+        self.name = 'cfg'
+        self.on_load = on_load
+        self.cfg = {}
 
-    def do_cfg(self, line):
-        try:
-            getattr(self, 'do_'+line)(line)
-        except:
-            print "no command '{}'".format(line)
+        cmd_base.add_default_command_delegation(self, self.name)
 
-
-    def complete_cfg(self, text, line, begidx, endidx):
-        return self.generic_class_based_complete(text, line, begidx, endidx)
-         # return [c for c in self.completenames(text, line, 0, 0) if 'do_'+c not in dir(CmdBase)]
-        # return self.completeFromNestedDict(line, self.cmd_tree)
+    #
+    # def do_cfg(self, line):
+    #     try:
+    #         getattr(self, 'do_'+line)(line)
+    #     except:
+    #         print "no command '{}'".format(line)
+    #
+    #
+    # def complete_cfg(self, text, line, begidx, endidx):
+    #     return self.generic_class_based_complete(text, line, begidx, endidx)
+    #      # return [c for c in self.completenames(text, line, 0, 0) if 'do_'+c not in dir(CmdBase)]
+    #     # return self.completeFromNestedDict(line, self.cmd_tree)
 
 
     def help_cfg(self):
@@ -65,7 +60,7 @@ class CmdConfig(CmdBase, object):
 
 
     def do_load(self, line):
-        self.load()
+        self.configure()
         # call the handler for the config loaded 'event'
 
 
@@ -82,7 +77,7 @@ class CmdConfig(CmdBase, object):
         from subprocess import call
         EDITOR = os.environ.get('EDITOR','vim') #that easy!
         call([EDITOR, os.path.expanduser('~/.cmd.yml')])
-        self.load()
+        self.configure()
 
 
 
