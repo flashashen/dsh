@@ -1,12 +1,11 @@
-import traceback, sys, os, cmd
+import traceback, sys, os, cmd, yaml
 import subprocess
-import yaml
 
 
 class CmdBase(cmd.Cmd, object):
 
 
-    def configure(self, master_cfg=None):
+    def configure(self, cfg_obj=None):
         pass
 
     #  override emptyline so last command is not repeated
@@ -32,23 +31,45 @@ class CmdBase(cmd.Cmd, object):
 
 
 
-    def create_command_func(self, cmd):
+    def create_command_func(self, configured_cmd):
         def func(self, line):
-
-            if isinstance(cmd, str):
-                cmd_list = [cmd]
-            else:
-                cmd_list = cmd
-
-            try:
-                print('\n')
-                for index, c in enumerate(cmd_list):
-                    print('{}. executing: {}\n'.format(index+1, c))
-                    print(subprocess.check_output(c, stderr=subprocess.STDOUT, shell=True))
-            except subprocess.CalledProcessError as e:
-                print(e.output)
-                # print output
+            self.execute(configured_cmd, True)
         return func
+        # def func(self, line, print_to_console=True):
+        #
+        #     if isinstance(cmd, str):
+        #         cmd_list = [cmd]
+        #     else:
+        #         cmd_list = cmd
+        #
+        #
+        #     if self.local_dir:
+        #         od = os.getcwd()
+        #         os.chdir(self.local_dir)
+        #
+        #     try:
+        #
+        #         print('\n')
+        #         for index, c in enumerate(cmd_list):
+        #             c = c.format(cfg=self.get_shell_cmd_context())
+        #             print('{}. executing: {}\n'.format(index+1, c))
+        #             output = subprocess.check_output(c, stderr=subprocess.STDOUT, shell=True)
+        #
+        #     except AttributeError as ae:
+        #         output = ae.message
+        #     except subprocess.CalledProcessError as e:
+        #         output = e.output
+        #
+        #     finally:
+        #         if od:
+        #             os.chdir(od)
+        #
+        #     if print_to_console:
+        #         print output
+        #
+        #     return output
+        #
+        # return func
 
 
     def create_help_func(self, str):
@@ -67,6 +88,8 @@ class CmdBase(cmd.Cmd, object):
 
         for key in sdict.keys():
             if 'env' == key:
+                pass
+            if 'dsh' == key:
                 pass
             else:
                 if isinstance(sdict[key], dict):
@@ -178,26 +201,73 @@ class CmdBase(cmd.Cmd, object):
             print(e)
 
 
-    def create_do_shell_command_func(self, cmd):
-        def func(self, line):
-            print('executing: {} against line (ignored) {} '.format(cmd, line))
-            try:
-                output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-            except subprocess.CalledProcessError as e:
-                output = e.output
-            print(output)
-        return func
-
 
     # Cmd class will call this method on the line if it begins with '!'
     def do_shell(self, line, print_to_console=True):
+        self.execute(line, print_to_console)
+
+
+    def __execute_with_running_output(self, command):
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # Poll process for new output until finished
+        while True:
+            nextline = process.stdout.readline()
+            if nextline == '' and process.poll() is not None:
+                break
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
+
+        output = process.communicate()[0]
+        exitCode = process.returncode
+
+        if (exitCode == 0):
+            return output
+        else:
+            raise Exception(command, exitCode, output)
+
+
+    def execute(self, line, print_to_console=True):
+
+        if isinstance(line, str):
+            cmd_list = [line]
+        else:
+            cmd_list = line
+
+
+        if 'local_dir' in self.__dict__ and self.local_dir:
+            od = os.getcwd()
+            os.chdir(self.local_dir)
+
         try:
-            output = subprocess.check_output(line, stderr=subprocess.STDOUT, shell=True)
+
+            print('\n')
+            for index, c in enumerate(cmd_list):
+                try:
+                    c = c.format(cfg=self.get_shell_cmd_context())
+                except:
+                    c = c.format(cfg=self.get_shell_cmd_context())
+                print('{}. executing: {}\n'.format(index+1, c))
+                output = self.__execute_with_running_output(c)
+                # output = subprocess.check_output(c, stderr=subprocess.STDOUT, shell=True)
+
+        except AttributeError as ae:
+            output = ae.message
         except subprocess.CalledProcessError as e:
             output = e.output
+
+        finally:
+            if 'local_dir' in self.__dict__ and self.local_dir:
+                os.chdir(od)
+
         if print_to_console:
-            print(output)
+            print output
+
         return output
+
+
+
+    def get_shell_cmd_context(self):
+        return self.cfg_obj.cfg
 
 
     def create_help_func(self, str):
@@ -206,7 +276,7 @@ class CmdBase(cmd.Cmd, object):
         return help_func
 
 
-        #
+
     # def completeFromArrays(self, line, argLists):
     #
     #     lineSegments = line.split()
@@ -236,28 +306,48 @@ class CmdBase(cmd.Cmd, object):
     #              ]
 
 
+    def add_default_command_delegation(self):
+
+        # Add default do method
+        def d(self, line):
+            try:
+                cmd_name = line.split()[0]
+                func = getattr(self, 'do_'+cmd_name)
+                if not func:
+                    print "no command '{}'".format(cmd_name)
+                    return
+                func(line)
+            except Exception as e:
+                print e.message
+        setattr(self.__class__, 'do_' + self.name, d)
+
+        # Add default complete method
+        def c(self, text, line, begidx, endidx):
+            return self.generic_class_based_complete(text, line, begidx, endidx)
+        setattr(self.__class__, 'complete_' + self.name, c)
+
+
 STANDARD_DO_METHODS = [f for f in dir(CmdBase) if f.startswith('do_')]
 
 
 
-def add_default_command_delegation(obj, name):
+def cfg_expanduser(obj, recursion = 0):
 
-    # Add default do method
-    def d(self, line):
-        try:
-            func = getattr(self, 'do_'+line)
-            if not func:
-                print "no command '{}'".format(line)
-                return
-            func(line)
-        except Exception as e:
-            print e.message
-    setattr(obj.__class__, 'do_' + name, d)
+    if isinstance(obj, str):
+        return os.path.expanduser(obj)
 
-    # Add default complete method
-    def c(self, text, line, begidx, endidx):
-        return self.generic_class_based_complete(text, line, begidx, endidx)
-    setattr(obj.__class__, 'complete_' + name, c)
+    elif isinstance(obj, list) and recursion < 10:
+        return [cfg_expanduser(x, recursion+1) for x in obj]
+
+    elif isinstance(obj, dict) and recursion < 10:
+        return { key: cfg_expanduser(obj[key], recursion+1) for key in obj }
+        # for key in dict:
+        #     dict[key] = cfg_expanduser(dict[key], recursion+1)
+
+    else:
+        return obj
+
+
 
 
 #

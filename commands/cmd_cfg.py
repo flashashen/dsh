@@ -17,8 +17,8 @@ class CmdConfig(CmdBase, object):
         self.name = 'cfg'
         self.on_load = on_load
         self.cfg = {}
-
-        cmd_base.add_default_command_delegation(self, self.name)
+        self.cmd = {}
+        self.add_default_command_delegation()
 
     #
     # def do_cfg(self, line):
@@ -55,8 +55,9 @@ class CmdConfig(CmdBase, object):
             print(cname + ':\n')
             self.pp.pprint(self.cfg[cname])
             print("\n")
-        # print("\ncommand tree:")
-        # self.pp.pprint(self.cmd_tree)
+
+        print("\ncommand tree:")
+        self.pp.pprint(self.cmd)
 
 
     def do_load(self, line):
@@ -84,13 +85,13 @@ class CmdConfig(CmdBase, object):
     # Configure. The first time this is called the master_cfg will be None and the whole
     # system gets configured in on_load. This method will be called again during the on_load
     # but at that point master_cfg will be set and nothing will be done.
-    def configure(self, master_cfg=None):
+    def configure(self, cfg_obj=None):
 
-        if not master_cfg:
+        if not cfg_obj:
             with open(os.path.expanduser('~') + '/.cmd.yml') as cfgfile:
-                self.cfg = yaml.load(cfgfile.read())
+                self.cfg = cmd_base.cfg_expanduser(yaml.load(cfgfile.read()))
             if self.on_load:
-                self.on_load(self.cfg)
+                self.on_load(self)
 
 
 
