@@ -1,2 +1,4 @@
 
 build: "eval $(docker-machine env); docker-compose build"
+
+run: "eval $(docker-machine env); docker-compose run --rm dsh"

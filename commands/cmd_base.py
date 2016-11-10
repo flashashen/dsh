@@ -1,6 +1,7 @@
 import traceback, sys, os, cmd, yaml
 import subprocess
-
+import types
+from cmd_proto import CmdProto
 
 class CmdBase(cmd.Cmd, object):
 
@@ -30,47 +31,46 @@ class CmdBase(cmd.Cmd, object):
         return [c for c in self.completenames(text, line, 0, 0) if 'do_'+c not in STANDARD_DO_METHODS and c != self.name]
 
 
+# deploy_w_role:
+#     help: 'Try specifying a sub command from another module - to deploy ingo'
+#     cmd:
+#         ans.role:
+#             role: app_pycardholder
+#             target: fsd-docker01.an.local"
+
+
+
+    # def create_dict_command_func(self, configured_cmd):
+    #
+    #     if isinstance(configured_cmd, dict):
+    #         for key, cmd_spec in  configured_cmd.iteritems():
+    #
+    #
+    #         setattr(sub_cmd_class, 'do_'+key, self.create_dict_command_func(sdict[key]['cmd']))
+    #         setattr(sub_cmd_class, 'help_'+key, self.create_help_func(sdict[key]['help']))
+    #     else:
+    #
+    # def func(self, line):
+    #         # !! add delegation to other commands here. in progress
+    #         # if params:
+    #         #     print 'params passed to do function: {}'.format(cmd_dict)
+    #         # cmd_segments = configured_cmd.split('.')
+    #         # if cmd_segments[0] in self.cfg_obj.cmd:
+    #         #     if len(cmd_segments) > 1:
+    #         #         self.cfg_obj.cmd[cmd_segments[1]](line)
+    #         #     print 'command found in {}'.format(cmd_segments[0])
+    #         #        self.cfg_obj.cmd[self.name][]
+    #         self.execute(configured_cmd, True)
+    #     return func
 
     def create_command_func(self, configured_cmd):
-        def func(self, line):
-            self.execute(configured_cmd, True)
-        return func
-        # def func(self, line, print_to_console=True):
-        #
-        #     if isinstance(cmd, str):
-        #         cmd_list = [cmd]
-        #     else:
-        #         cmd_list = cmd
-        #
-        #
-        #     if self.local_dir:
-        #         od = os.getcwd()
-        #         os.chdir(self.local_dir)
-        #
-        #     try:
-        #
-        #         print('\n')
-        #         for index, c in enumerate(cmd_list):
-        #             c = c.format(cfg=self.get_shell_cmd_context())
-        #             print('{}. executing: {}\n'.format(index+1, c))
-        #             output = subprocess.check_output(c, stderr=subprocess.STDOUT, shell=True)
-        #
-        #     except AttributeError as ae:
-        #         output = ae.message
-        #     except subprocess.CalledProcessError as e:
-        #         output = e.output
-        #
-        #     finally:
-        #         if od:
-        #             os.chdir(od)
-        #
-        #     if print_to_console:
-        #         print output
-        #
-        #     return output
-        #
-        # return func
 
+        # if isinstance(configured_cmd, dict):
+        #     return CmdProto.from_dict('test', configured_cmd, self.cfg_obj.cmd_tree, self.cfg_obj.cfg)
+
+        def func(self, line):
+            self.execute(configured_cmd, line, True)
+        return func
 
     def create_help_func(self, str):
         def help_func(self):
@@ -93,8 +93,10 @@ class CmdBase(cmd.Cmd, object):
                 pass
             else:
                 if isinstance(sdict[key], dict):
-                    setattr(sub_cmd_class, 'do_'+key, self.create_command_func(sdict[key]['cmd']))
-                    setattr(sub_cmd_class, 'help_'+key, self.create_help_func(sdict[key]['help']))
+                    cp = CmdProto.from_dict_with_CmdBase_obj(key, sdict[key], self.cfg_obj)
+                    cp.setup_Cmd_methods(sub_cmd_class)
+                    # setattr(sub_cmd_class, 'do_'+key, cp.as_cmd_do_function())
+                    # setattr(sub_cmd_class, 'help_'+key, self.create_help_func(sdict[key]['help']))
                 else:
                     setattr(sub_cmd_class, 'do_'+key, self.create_command_func(sdict[key]))
                     setattr(sub_cmd_class, 'help_'+key, self.create_help_func('Cmd = {}'.format(sdict[key])))
@@ -204,7 +206,7 @@ class CmdBase(cmd.Cmd, object):
 
     # Cmd class will call this method on the line if it begins with '!'
     def do_shell(self, line, print_to_console=True):
-        self.execute(line, print_to_console)
+        self.execute(line, None, print_to_console)
 
 
     def __execute_with_running_output(self, command):
@@ -226,13 +228,43 @@ class CmdBase(cmd.Cmd, object):
             raise Exception(command, exitCode, output)
 
 
-    def execute(self, line, print_to_console=True):
+    def flatten_cmd(self, cmds, cmd_tree):
 
-        if isinstance(line, str):
-            cmd_list = [line]
-        else:
-            cmd_list = line
+        if isinstance(cmds, str) or isinstance(cmds, CmdProto):
+            return [cmds]
 
+        cmd_list = []
+        if isinstance(cmds, list):
+            for item in cmds:
+                cmd_list.extend(self.flatten_cmd(item, cmd_tree))
+
+        elif isinstance(cmds, dict):
+            # Recursive call to iterate over dict items though only one is expected
+            for key, item in cmds.iteritems():
+
+                # dict could now be the whole sub cmd spec with 'cmd' as an item
+                if isinstance(item, dict):
+                    cmd_list.extend(self.flatten_cmd(item, cmd_tree))
+                elif isinstance(item, str):
+                    # The value is a string so this is a command in the form of <cmd.subcmd>:<args line>
+                    cmd_segments = key.split('.')
+                    if len(cmd_segments) > 1:
+                        if cmd_segments[0] in cmd_tree:
+                            cmd_list.append(CmdProto.from_CmdBase_instance_method(cmd_tree[cmd_segments[0]][cmd_segments[1]], cmds[key]))
+                            # cmd_list.append(cmd_tree[cmd_segments[0]][cmd_segments[1]])
+                            # args = cmds[key]
+                        else:
+                            print "root level command not found: {}".format(cmd_segments[0])
+                    else:
+                        print 'no self cmd supported here'
+                else:
+                    print 'unexpected value type for obj %s' %item
+
+        return cmd_list
+
+
+
+    def execute(self, cmds, args, print_to_console=True):
 
         if 'local_dir' in self.__dict__ and self.local_dir:
             od = os.getcwd()
@@ -240,15 +272,24 @@ class CmdBase(cmd.Cmd, object):
 
         try:
 
+            cmd_list = self.flatten_cmd(cmds, self.cfg_obj.cmd)
+
             print('\n')
+            output = None
+
             for index, c in enumerate(cmd_list):
-                try:
+
+                if isinstance(c, CmdProto):
+                    c.execute(args)
+                elif type(c) == types.MethodType:
+                    c(args)
+                else:
+                    # try:
                     c = c.format(cfg=self.get_shell_cmd_context())
-                except:
-                    c = c.format(cfg=self.get_shell_cmd_context())
-                print('{}. executing: {}\n'.format(index+1, c))
-                output = self.__execute_with_running_output(c)
-                # output = subprocess.check_output(c, stderr=subprocess.STDOUT, shell=True)
+                    # except:
+                    #     c = c.format(cfg=self.get_shell_cmd_context())
+                    print('executing: {}\n'.format(c))
+                    output = self.__execute_with_running_output(c)
 
         except AttributeError as ae:
             output = ae.message
@@ -259,7 +300,7 @@ class CmdBase(cmd.Cmd, object):
             if 'local_dir' in self.__dict__ and self.local_dir:
                 os.chdir(od)
 
-        if print_to_console:
+        if output and print_to_console:
             print output
 
         return output

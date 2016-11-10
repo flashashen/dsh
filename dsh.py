@@ -89,17 +89,21 @@ class CmdDSH(CmdBase, object):
 
         cmd_name = cmd_obj.name
 
-        # create a separate cmd dict
+        # create a separate cmd dictbb!!!!!!!  this gets setup after cmdproto.
         self.cfg_obj.cmd[cmd_name] = { name: cmd_obj.__getattribute__('do_' + name) for name in cmd_obj.completenames('') }
 
         def d(self, line):
-            subcmd = line.split()[0]
-            try:
-                return getattr(cmd_obj, 'do_' + subcmd)(line)
-            except AttributeError as e:
-                print 'no command {}'.format(subcmd)
-            except Exception as e:
-                print e
+            segments = line.split()
+            if segments:
+                subcmd = segments[0]
+                try:
+                    return getattr(cmd_obj, 'do_' + subcmd)(line)
+                except AttributeError as e:
+                    print 'no command {}'.format(subcmd)
+                except Exception as e:
+                    print e
+            else:
+                cmd_obj.cmdloop_ignore_interrupt()
 
             # if 'do_' + subcmd in cmd_obj.__dict__:
             #     return getattr(cmd_obj, 'do_' + subcmd)(line)

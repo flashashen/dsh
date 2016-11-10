@@ -29,10 +29,6 @@ class CmdDocker(CmdBase, object):
         print cmd
         self.do_shell(cmd)
 
-    def do_test(self, line):
-        print 'test '
-
-
 
     def get_vm_info(self):
         info = json.loads(self.do_shell('docker-machine inspect', False))
