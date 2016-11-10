@@ -10,6 +10,8 @@ class CmdDocker(CmdBase, object):
         self.name = 'dkr'
         self.add_default_command_delegation()
 
+    def do_vm_start(self, line):
+        self.do_shell('docker-machine start')
 
     def do_vm(self, line):
         dm_info = self.get_vm_info()

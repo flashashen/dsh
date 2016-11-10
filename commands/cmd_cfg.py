@@ -65,7 +65,6 @@ class CmdConfig(CmdBase, object):
         # call the handler for the config loaded 'event'
 
 
-
     def do_search(self, line):
         import fnmatch
         matches = []
@@ -81,8 +80,31 @@ class CmdConfig(CmdBase, object):
         self.configure()
 
 
+    #
+    # def help_venv(self):
+    #     print "usage: venv init|activate"
+    # def do_venv(self, line):
+    #
+    #     segments = line.split()
+    #     if len(segments) < 2:
+    #         self.do_help()
+    #
+    #     sub_cmd = segments[1]
+    #     # if sub_cmd == 'install':
+    #     #     print sub_cmd + 'not implemeted'
+    #     #     return
+    #
+    #     if sub_cmd == 'init':
+    #         self.execute('virtualenv .env', '')
+    #         return
+    #
+    #     if sub_cmd == 'activate':
+    #         self.execute('source .env/bin/activate', '  ')
+    #         return
 
-    # Configure. The first time this is called the master_cfg will be None and the whole
+
+
+        # Configure. The first time this is called the master_cfg will be None and the whole
     # system gets configured in on_load. This method will be called again during the on_load
     # but at that point master_cfg will be set and nothing will be done.
     def configure(self, cfg_obj=None):

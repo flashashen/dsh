@@ -2,6 +2,9 @@
 #  Ignore file based on template from https://help.github.com/articles/ignoring-files
 #
 
+
+.env
+
 # Compiled source #
 ###################
 *.com

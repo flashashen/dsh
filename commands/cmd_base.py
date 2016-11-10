@@ -92,14 +92,17 @@ class CmdBase(cmd.Cmd, object):
             if 'dsh' == key:
                 pass
             else:
-                if isinstance(sdict[key], dict):
-                    cp = CmdProto.from_dict_with_CmdBase_obj(key, sdict[key], self.cfg_obj)
-                    cp.setup_Cmd_methods(sub_cmd_class)
-                    # setattr(sub_cmd_class, 'do_'+key, cp.as_cmd_do_function())
-                    # setattr(sub_cmd_class, 'help_'+key, self.create_help_func(sdict[key]['help']))
-                else:
-                    setattr(sub_cmd_class, 'do_'+key, self.create_command_func(sdict[key]))
-                    setattr(sub_cmd_class, 'help_'+key, self.create_help_func('Cmd = {}'.format(sdict[key])))
+                cp = CmdProto.from_dict_with_CmdBase_obj(sname, key, sdict[key], self.cfg_obj)
+                cp.setup_Cmd_methods(sub_cmd_class)
+
+                # if isinstance(sdict[key], dict):
+                #     cp = CmdProto.from_dict_with_CmdBase_obj(sname, key, sdict[key], self.cfg_obj)
+                #     cp.setup_Cmd_methods(sub_cmd_class)
+                #     # setattr(sub_cmd_class, 'do_'+key, cp.as_cmd_do_function())
+                #     # setattr(sub_cmd_class, 'help_'+key, self.create_help_func(sdict[key]['help']))
+                # else:
+                #     setattr(sub_cmd_class, 'do_'+key, self.create_command_func(sdict[key]))
+                #     setattr(sub_cmd_class, 'help_'+key, self.create_help_func('Cmd = {}'.format(sdict[key])))
 
         # def c(self, text, line, begidx, endidx):
         #     print "dyn complete. text = '{}' line = '{}', {} {}".format(text, line, begidx, endidx)
@@ -274,7 +277,7 @@ class CmdBase(cmd.Cmd, object):
 
             cmd_list = self.flatten_cmd(cmds, self.cfg_obj.cmd)
 
-            print('\n')
+            # print('\n')
             output = None
 
             for index, c in enumerate(cmd_list):
