@@ -11,6 +11,7 @@ from commands.cmd_base import CmdBase
 from commands.cmd_cfg import CmdConfig
 from commands.cmd_docker import CmdDocker
 from commands.cmd_ansible import CmdAnsible
+from commands.cmd_ftp import CmdFtp
 
 
 
@@ -26,7 +27,7 @@ class CmdDSH(CmdBase, object):
         self.cmd = {}
         self.name = 'dsh'
 
-        self.imported_cmds = [CmdDocker(), CmdAnsible(), self.cfg_obj]
+        self.imported_cmds = [CmdDocker(), CmdAnsible(), CmdFtp(), self.cfg_obj]
         self.prj_objects = { obj.name: obj for obj in self.imported_cmds}
 
         # Let the config object setup everything

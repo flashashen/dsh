@@ -13,6 +13,11 @@ class CmdBase(cmd.Cmd, object):
     def emptyline(self):
         pass
 
+    def precmd(self, line):
+        if line.startswith(self.name+' '):
+            line = ' '.join(line.split()[1:])
+        return line
+
     def do_q(self, line):
         return True
 

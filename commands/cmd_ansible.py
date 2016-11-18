@@ -12,7 +12,7 @@ class CmdAnsible(CmdBase, object):
 
     cmd_rcmd = "ansible all -i {cfg[ans][inventory_file]} \
         -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
-        --become --become-user=root --private-key={cfg[ans][ssh_key]} -a '{cfg[scratch][LINE]}' --limit={cfg[scratch][TARGET]}"
+        --become --become-user=root --private-key={cfg[ans][ssh_key]} -m shell -a '{cfg[scratch][LINE]}' --limit={cfg[scratch][TARGET]}"
 
 
     cmd_run_role = " ansible-playbook -i {cfg[ans][inventory_file]} {cfg[ans][playbook_dir]}/run_role.yml \
