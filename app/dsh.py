@@ -12,6 +12,7 @@ from commands.cmd_cfg import CmdConfig
 from commands.cmd_docker import CmdDocker
 from commands.cmd_ansible import CmdAnsible
 from commands.cmd_ftp import CmdFtp
+from commands.cmd_db import CmdDb
 
 
 
@@ -27,7 +28,7 @@ class CmdDSH(CmdBase, object):
         self.cmd = {}
         self.name = 'dsh'
 
-        self.imported_cmds = [CmdDocker(), CmdAnsible(), CmdFtp(), self.cfg_obj]
+        self.imported_cmds = [CmdDocker(), CmdDb(), CmdAnsible(), CmdFtp(), self.cfg_obj]
         self.prj_objects = { obj.name: obj for obj in self.imported_cmds}
 
         # Let the config object setup everything
@@ -67,7 +68,6 @@ class CmdDSH(CmdBase, object):
             cmd_obj.cfg_obj = self.cfg_obj
 
 
-
     def completenames(self, text, *ignored):
         dotext = 'do_'+text
         return [a[3:] for a in self.get_names() if a.startswith(dotext) and not a in ['do_EOF','do_shell'] ]
@@ -98,6 +98,8 @@ class CmdDSH(CmdBase, object):
             if segments:
                 subcmd = segments[0]
                 try:
+                    if segments[1]:
+                        line = ' '.join(segments[1:])
                     return getattr(cmd_obj, 'do_' + subcmd)(line)
                 except AttributeError as e:
                     print 'no command {}'.format(subcmd)
