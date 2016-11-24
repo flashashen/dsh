@@ -98,7 +98,7 @@ class CmdDSH(CmdBase, object):
             if segments:
                 subcmd = segments[0]
                 try:
-                    if segments[1]:
+                    if len(segments) > 1:
                         line = ' '.join(segments[1:])
                     return getattr(cmd_obj, 'do_' + subcmd)(line)
                 except AttributeError as e:
