@@ -156,11 +156,12 @@ class CmdProto():
         # this method is called while classes are still being loaded.
         def executor(input, cmdproto):
 
-            # cmds and cp are bound via closure
-            if not cmdproto._cmd_list:
-                cmdproto._cmd_list = flatten_cmd(cmds, cp)
-            for cmd in cmdproto._cmd_list:
-                cmd.execute(input)
+            with temp_chdir(cmdproto.get_base_dir()):
+                # cmds and cp are bound via closure
+                if not cmdproto._cmd_list:
+                    cmdproto._cmd_list = flatten_cmd(cmds, cp)
+                for cmd in cmdproto._cmd_list:
+                    cmd.execute(input)
 
         cp.executor = executor
         return cp
