@@ -9,18 +9,22 @@ class CmdAnsible(CmdBase, object):
         self.name = 'ans'
         self.add_default_command_delegation()
 
+    # -i {cfg[ans][inventory_file]}  removed in favor of local ansible config files. can still be specified via cmd or default cfg
 
-    cmd_rcmd = "ansible all -i {cfg[ans][inventory_file]} \
-        -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
+    cmd_rcmd = "ansible all -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
         --become --become-user=root --private-key={cfg[ans][ssh_key]} -m shell -a '{cfg[scratch][LINE]}' --limit={cfg[scratch][TARGET]}"
 
 
-    cmd_run_role = " ansible-playbook -i {cfg[ans][inventory_file]} {cfg[ans][playbook_dir]}/run_role.yml \
-                --vault-password-file={cfg[ans][vault_pass_file]} \
-                -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
-                --private-key={cfg[ans][ssh_key]} \
+    cmd_run_role = " ansible-playbook {cfg[ans][playbook_dir]}/run_role.yml \
                 --become --become-user=root \
                 -e  'ROLE={cfg[scratch][ROLE]}'"
+
+    # cmd_run_role = " ansible-playbook {cfg[ans][playbook_dir]}/run_role.yml \
+    #             --vault-password-file={cfg[ans][vault_pass_file]} \
+    #             -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
+    #             --private-key={cfg[ans][ssh_key]} \
+    #             --become --become-user=root \
+    #             -e  'ROLE={cfg[scratch][ROLE]}'"
 
     cmd_role_part_target = " -e 'TARGET={cfg[scratch][TARGET]}'"
 
