@@ -239,6 +239,8 @@ class CmdBase(cmd.Cmd, object):
         if (exitCode == 0):
             return output
         else:
+            #pass
+            # print command, exitCode, output
             raise Exception(command, exitCode, output)
 
 
