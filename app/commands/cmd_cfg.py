@@ -74,7 +74,7 @@ class CmdConfig(CmdBase, object):
         print(matches)
 
     def do_edit(self, line):
-        self.do_edit_file(self, '~/.cmd.yml')
+        self.do_edit_file('~/.cmd.yml')
         # from subprocess import call
         # EDITOR = os.environ.get('EDITOR','vim') #that easy!
         # call([EDITOR, os.path.expanduser('~/.cmd.yml')])
