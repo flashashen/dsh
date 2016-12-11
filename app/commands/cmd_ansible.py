@@ -22,16 +22,16 @@ class CmdAnsible(CmdBase, object):
         --become --become-user=root --private-key={cfg[ans][ssh_key]} -m shell -a '{cfg[scratch][LINE]}' --limit={cfg[scratch][TARGET]}"
 
 
-    cmd_run_role = " ansible-playbook {cfg[ans][playbook_dir]}/run_role.yml \
-                --become --become-user=root \
-                -e  'ROLE={cfg[scratch][ROLE]}'"
-
     # cmd_run_role = " ansible-playbook {cfg[ans][playbook_dir]}/run_role.yml \
-    #             --vault-password-file={cfg[ans][vault_pass_file]} \
-    #             -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
-    #             --private-key={cfg[ans][ssh_key]} \
     #             --become --become-user=root \
     #             -e  'ROLE={cfg[scratch][ROLE]}'"
+
+    # --private - key = {cfg[ans][ssh_key]}
+    cmd_run_role = " ansible-playbook -vvv " + os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'run_role.yml') +  " \
+        -i {cfg[ans][inventory_file]}  --vault-password-file={cfg[ans][vault_pass_file]} \
+        -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]} ' -e 'ansible_ssh_pass={cfg[ans][ssh_pass]}' \
+        --become --become-user=root \
+        -e  'ROLE={cfg[scratch][ROLE]}'"
 
     cmd_role_part_target = " -e 'TARGET={cfg[scratch][TARGET]}'"
 
@@ -73,10 +73,13 @@ class CmdAnsible(CmdBase, object):
 
 
     def help_role(self):
-        print 'Usage: role rolename [target host]'
+        print 'Usage: role rolename target'
 
     def do_role(self, line):
         args = line.split()
+        if len(args) < 2:
+            self.help_role()
+            return
         if args:
             try:
                 cmd_string = self.cmd_run_role
@@ -85,6 +88,7 @@ class CmdAnsible(CmdBase, object):
                     cmd_string += self.cmd_role_part_target
                     self.cfg_obj.cfg['scratch']['TARGET'] = args[1]
 
+                print cmd_string
                 self.execute(cmd_string, line)
             finally:
                 self.cfg_obj.cfg['scratch'] = {}

@@ -1,0 +1,14 @@
+---
+# Play:   run_role.yml
+# Usage:  ansible-playbook -i ~/ansible/invs ~/ansible/run_role.yml -e "ROLE=<role>" -e "TARGET=<n.n.n.n|host@fqdn>"
+
+
+- hosts:  '{{TARGET}}'
+#  user:    ansible
+#  become:  true
+
+
+  roles:
+  - { role: '{{ROLE}}' }
+
+
