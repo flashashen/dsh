@@ -214,7 +214,7 @@ class CmdBase(cmd.Cmd, object):
 
     # Cmd class will call this method on the line if it begins with '!'
     def do_shell(self, line, print_to_console=True):
-        self.execute(line, None, print_to_console)
+        return self.execute(line, None, print_to_console)
 
 
     def do_edit_file(self, line):
