@@ -1,10 +1,4 @@
-import readline
-import rlcompleter
-
-if 'libedit' in readline.__doc__:
-    readline.parse_and_bind("bind ^I rl_complete")
-else:
-    readline.parse_and_bind("tab: complete")
+import readline, atexit
 
 
 import cmd
@@ -111,7 +105,7 @@ class CmdDSH(CmdBase, object):
                         line = ' '.join(segments[1:])
                     return getattr(cmd_obj, 'do_' + subcmd)(line)
                 except AttributeError as e:
-                    print 'no command {}'.format(subcmd)
+                    print "exception executing '{}': {}".format(subcmd, e)
                 except Exception as e:
                     print e
             else:
@@ -149,6 +143,19 @@ class CmdDSH(CmdBase, object):
 
 
 if __name__ == '__main__':
+
+    if 'libedit' in readline.__doc__:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+
+
+    histfile = os.path.join(os.path.expanduser("~"), ".dsh_history")
+    try:
+        readline.read_history_file(histfile)
+    except IOError:
+        pass
+    atexit.register(readline.write_history_file, histfile)
 
     prj = CmdDSH();
     prj.cmdloop_ignore_interrupt()
