@@ -1,7 +1,4 @@
-import cmd_base
 from cmd_base import CmdBase
-import pysftp
-
 
 
 class CmdDb(CmdBase, object):
@@ -41,7 +38,7 @@ class CmdDb(CmdBase, object):
 
 
 
-    def get_engine(self, cfg_name):
+    def get_engine(self, cfg_name, db=None, echo=False):
         if cfg_name:
             if cfg_name in self.engines:
                 # the engine is already setup. just return it
@@ -59,7 +56,7 @@ class CmdDb(CmdBase, object):
                     'redacted',
                     config['host'],
                     str(config['port']),
-                    config['name']))
+                    db if db else config['name']))
 
                 self.engines[cfg_name] = sqlalchemy.create_engine(url_format_string.format(
                     config['driver'],
@@ -67,8 +64,9 @@ class CmdDb(CmdBase, object):
                     config['pass'],
                     config['host'],
                     str(config['port']),
-                    config['name']),
-                    connect_args={'login_timeout': 6}, echo=True)
+                    db if db else config['name']),
+                    connect_args=config['args'],
+                    echo=echo)
                 return self.engines[cfg_name]
             else:
                 print '{} is not a known engine config. Defined configurations are: {}'.format(cfg_name, self.cfg['db'].keys())
