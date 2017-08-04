@@ -10,26 +10,20 @@ class CmdAnsible(CmdBase, object):
         self.name = 'ans'
         self.add_default_command_delegation()
 
-    # -i {cfg[ans][inventory_file]}  removed in favor of local ansible config files. can still be specified via cmd or default cfg
 
     cmd_play = "ansible-playbook -i {cfg[ans][inventory_file]} {cfg[scratch][PLAYBOOK]} \
-        -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -e 'ansible_ssh_pass={cfg[ans][ssh_pass]}' \
+        -e 'ansible_ssh_user={cfg[ans][ssh_user]}' --private-key={cfg[ans][ssh_key]}  \
         --vault-password-file={cfg[ans][vault_pass_file]} --limit={cfg[scratch][TARGET]} \
-        -e 'ansible_sudo_pass={cfg[ans][ssh_pass]}' {cfg[scratch][LINE]}"
+         {cfg[scratch][LINE]}"
 
 
-    cmd_rcmd = "ansible all -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
-        --become --become-user=root --private-key={cfg[ans][ssh_key]} -m shell -a '{cfg[scratch][LINE]}' --limit={cfg[scratch][TARGET]}"
+    cmd_rcmd = "ansible all -i {cfg[scratch][TARGET]}, -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' \
+        --become    --become-user=root --private-key={cfg[ans][ssh_key]} -m shell -a '{cfg[scratch][LINE]}' --limit={cfg[scratch][TARGET]}"
 
 
-    # cmd_run_role = " ansible-playbook {cfg[ans][playbook_dir]}/run_role.yml \
-    #             --become --become-user=root \
-    #             -e  'ROLE={cfg[scratch][ROLE]}'"
-
-    # --private - key = {cfg[ans][ssh_key]}
-    cmd_run_role = " ansible-playbook -vvv " + os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'run_role.yml') +  " \
+    cmd_run_role = " ansible-playbook " + os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'run_role.yml') + " \
         -i {cfg[ans][inventory_file]}  --vault-password-file={cfg[ans][vault_pass_file]} \
-        -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]} ' -e 'ansible_ssh_pass={cfg[ans][ssh_pass]}' \
+        -e 'ansible_ssh_user={cfg[ans][ssh_user]}' -u '{cfg[ans][ssh_user]}' --private-key={cfg[ans][ssh_key]} \
         --become --become-user=root \
         -e  'ROLE={cfg[scratch][ROLE]}'"
 
@@ -48,8 +42,8 @@ class CmdAnsible(CmdBase, object):
                 # print 'playbook {}'.format(playbook)
                 cmd_string = self.cmd_play
                 self.cfg_obj.cfg['scratch'] = {'PLAYBOOK':playbook}
-                self.cfg_obj.cfg['scratch']['TARGET'] = args[1]
-                self.cfg_obj.cfg['scratch']['LINE'] = ' '.join(args[2:])
+                self.cfg_obj.cfg['scratch']['TARGET'] = args[1] if len(args) >= 2 else ''
+                self.cfg_obj.cfg['scratch']['LINE'] = ' '.join(args[2:]) if len(args) >= 3 else ''
                 self.execute(cmd_string, '')
             finally:
                 self.cfg_obj.cfg['scratch'] = {}
