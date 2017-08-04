@@ -1,11 +1,11 @@
-import cmd_base
 from cmd_base import CmdBase
-import pysftp
+
 
 
 class CmdFtp(CmdBase, object):
 
     def __init__(self):
+            import pysftp
             super(self.__class__, self).__init__()
             self.name = 'ftp'
             self.add_default_command_delegation()
