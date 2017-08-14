@@ -11,5 +11,5 @@ services:
       restart: always
       command: "python /app/dsh.py"
       environment:
-          ANSIBLE_HOST_KEY_CHECKING: false
+          ANSIBLE_HOST_KEY_CHECKING: "false"
 
