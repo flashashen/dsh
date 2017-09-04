@@ -160,8 +160,13 @@ class CmdProto():
                 # cmds and cp are bound via closure
                 if not cmdproto._cmd_list:
                     cmdproto._cmd_list = flatten_cmd(cmds, cp)
-                for cmd in cmdproto._cmd_list:
-                    cmd.execute(input)
+
+                try:
+                    for cmd in cmdproto._cmd_list:
+                        cmd.execute(input)
+                except:
+                    # Do nothing for now. Assume the exception is already displayed to console
+                    pass
 
         cp.executor = executor
         return cp
@@ -228,9 +233,14 @@ def execute_with_running_output(command, ctx):
             raise Exception(command, exitCode, output)
 
     except subprocess.CalledProcessError as e:
-        return e.output
+        sys.stdout.write(e.output)
+        sys.stdout.flush()
+        raise
     except Exception as ae:
-        return ae.message
+        sys.stdout.write(ae.message)
+        sys.stdout.flush()
+        raise
+
 
 
 
